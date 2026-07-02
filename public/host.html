@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Muzyczny - Host</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <img class="bg-character" src="/bg-girl.png" alt="" aria-hidden="true" />
+
+  <div class="console">
+  <h1>♫ Quiz Muzyczny — ekran hosta</h1>
+
+  <div id="lobbyView">
+    <p>Kod pokoju dla graczy:</p>
+    <div class="code" id="roomCode">----</div>
+    <p>Gracze dołączają na <strong>/player.html</strong> i wpisują ten kod.</p>
+    <div class="players-list" id="playersList"></div>
+
+    <h3>Artyści</h3>
+    <p>
+      <button id="selectAllBtn">Zaznacz wszystkich</button>
+      <button id="selectNoneBtn">Odznacz wszystkich</button>
+    </p>
+    <p id="artistsSummary">Wybrano 0 artystów, 0 utworów</p>
+    <div class="players-list" id="artistsList"></div>
+
+    <h3>Ustawienia</h3>
+    <label>Tryb gry:
+      <select id="tryb">
+        <option value="losowy_fragment">Losowy fragment</option>
+        <option value="poczatek">Początek utworu</option>
+      </select>
+    </label><br />
+    <label>Ilość rund:
+      <input type="number" id="iloscRund" value="5" min="1" max="20" />
+    </label><br />
+    <label>Czas fragmentu (s):
+      <input type="number" id="czasOdtwarzania" value="3" min="1" max="15" />
+    </label><br />
+    <label>Ilość odpowiedzi:
+      <input type="number" id="iloscOdpowiedzi" value="4" min="2" max="8" />
+    </label><br />
+    <label>Czas na odpowiedź (s):
+      <input type="number" id="czasNaOdpowiedz" value="10" min="3" max="60" />
+    </label><br />
+
+    <button class="primary" id="startBtn">Start gry</button>
+    <p id="startError" style="color:#ff8fb8"></p>
+  </div>
+
+  <div id="prepView" style="display:none">
+    <p id="prepStatus">Przygotowywanie rund...</p>
+  </div>
+
+  <div id="roundView" style="display:none">
+    <h2 id="roundLabel"></h2>
+    <audio id="clipAudio" controls autoplay></audio>
+    <div class="options" id="hostOptions"></div>
+    <h3>Odpowiedzieli: <span id="answeredCount">0</span>/<span id="totalPlayersCount">0</span></h3>
+    <div class="players-list" id="answeredList"></div>
+  </div>
+
+  <div id="resultView" style="display:none">
+    <h2>Poprawna odpowiedź: <span id="correctAnswer"></span></h2>
+    <div class="players-list" id="roundResultsList"></div>
+    <h3>Ranking</h3>
+    <div class="leaderboard" id="leaderboard"></div>
+    <button class="primary" id="nextBtn">Następna runda</button>
+  </div>
+
+  <div id="endView" style="display:none">
+    <h2>Koniec gry! ★</h2>
+    <div class="leaderboard" id="finalLeaderboard"></div>
+  </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/host.js"></script>
+</body>
+</html>

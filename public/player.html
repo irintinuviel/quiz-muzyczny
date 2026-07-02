@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Muzyczny - Gracz</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <img class="bg-character" src="/bg-girl.png" alt="" aria-hidden="true" />
+
+  <div class="console">
+  <h1>♫ Quiz Muzyczny</h1>
+
+  <div id="joinView">
+    <input type="text" id="codeInput" placeholder="KOD POKOJU" maxlength="5" style="text-transform:uppercase" />
+    <input type="text" id="nameInput" placeholder="Twoje imię" maxlength="20" /><br />
+    <button class="primary" id="joinBtn">Dołącz</button>
+    <p id="joinError" style="color:#ff8fb8"></p>
+  </div>
+
+  <div id="waitView" style="display:none">
+    <p>Jesteś w pokoju! Czekaj na start gry...</p>
+  </div>
+
+  <div id="answerView" style="display:none">
+    <h2 id="roundLabel"></h2>
+    <div class="options" id="playerOptions"></div>
+    <p id="answerStatus"></p>
+  </div>
+
+  <div id="resultView" style="display:none">
+    <h2 id="resultMsg"></h2>
+    <p id="scoreMsg"></p>
+  </div>
+
+  <div id="endView" style="display:none">
+    <h2>Koniec gry! ★</h2>
+    <div class="leaderboard" id="finalLeaderboard"></div>
+  </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/player.js"></script>
+</body>
+</html>

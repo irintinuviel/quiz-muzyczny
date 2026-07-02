@@ -1,0 +1,22 @@
+{
+  "name": "musicquiz-online",
+  "version": "0.1.0",
+  "description": "Quiz muzyczny online (host + gracze przez WebSocket), oparty na logice z mp.py",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "fluent-ffmpeg": "^2.1.2",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "nanoid": "^3.3.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
