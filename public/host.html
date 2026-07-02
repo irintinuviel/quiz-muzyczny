@@ -7,6 +7,9 @@
 </head>
 <body>
   <img class="bg-character" src="/bg-girl.png" alt="" aria-hidden="true" />
+  <img class="bg-star bg-star-1" src="/star-magenta.svg" alt="" aria-hidden="true" />
+  <img class="bg-star bg-star-2" src="/star-magenta.svg" alt="" aria-hidden="true" />
+  <img class="bg-star bg-star-3" src="/star-magenta.svg" alt="" aria-hidden="true" />
 
   <div class="console">
   <h1>♫ Quiz Muzyczny — ekran hosta</h1>
@@ -17,13 +20,47 @@
     <p>Gracze dołączają na <strong>/player.html</strong> i wpisują ten kod.</p>
     <div class="players-list" id="playersList"></div>
 
-    <h3>Artyści</h3>
-    <p>
-      <button id="selectAllBtn">Zaznacz wszystkich</button>
-      <button id="selectNoneBtn">Odznacz wszystkich</button>
-    </p>
-    <p id="artistsSummary">Wybrano 0 artystów, 0 utworów</p>
-    <div class="players-list" id="artistsList"></div>
+    <h3>Źródło muzyki</h3>
+    <label>
+      <select id="zrodlo">
+        <option value="lokalne">Lokalna biblioteka</option>
+        <option value="spotify">Spotify (wymaga Premium)</option>
+      </select>
+    </label>
+
+    <div id="localSourcePanel">
+      <h3>Artyści (lokalnie)</h3>
+      <p>
+        <button id="selectAllBtn">Zaznacz wszystkich</button>
+        <button id="selectNoneBtn">Odznacz wszystkich</button>
+      </p>
+      <p id="artistsSummary">Wybrano 0 artystów, 0 utworów</p>
+      <div class="players-list" id="artistsList"></div>
+    </div>
+
+    <div id="spotifySourcePanel" style="display:none">
+      <h3>Spotify</h3>
+      <p>
+        <button id="spotifyConnectBtn">Połącz ze Spotify</button>
+        <span id="spotifyStatus">Niepołączono</span>
+      </p>
+      <div id="spotifySearchRow" style="display:none">
+        <input type="text" id="spotifyArtistQuery" placeholder="Szukaj artysty..." />
+        <button id="spotifySearchBtn">Szukaj</button>
+      </div>
+      <label>Ile utworów od artysty:
+        <input type="number" id="spotifyTrackCount" value="20" min="1" max="100" />
+      </label><br />
+      <label>Wybór utworów:
+        <select id="spotifyTrackMode">
+          <option value="losowe">Losowo z całej dyskografii</option>
+          <option value="popularne">Najpopularniejsze</option>
+        </select>
+      </label>
+      <div class="players-list" id="spotifySearchResults"></div>
+      <p id="spotifyPoolSummary">Dodanych artystów: 0, utworów w puli: 0</p>
+      <div class="players-list" id="spotifyAddedArtists"></div>
+    </div>
 
     <h3>Ustawienia</h3>
     <label>Tryb gry:
@@ -56,6 +93,7 @@
   <div id="roundView" style="display:none">
     <h2 id="roundLabel"></h2>
     <audio id="clipAudio" controls autoplay></audio>
+    <p id="spotifyNowPlaying" style="display:none">♫ Odtwarzanie przez Spotify...</p>
     <div class="options" id="hostOptions"></div>
     <h3>Odpowiedzieli: <span id="answeredCount">0</span>/<span id="totalPlayersCount">0</span></h3>
     <div class="players-list" id="answeredList"></div>
@@ -72,6 +110,7 @@
   <div id="endView" style="display:none">
     <h2>Koniec gry! ★</h2>
     <div class="leaderboard" id="finalLeaderboard"></div>
+    <button class="primary" id="backToLobbyBtn">Powrót do ekranu głównego</button>
   </div>
   </div>
 

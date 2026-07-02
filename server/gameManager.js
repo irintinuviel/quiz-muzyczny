@@ -1,11 +1,14 @@
 const { customAlphabet } = require("nanoid");
 const { prepareRounds, clearClips } = require("./audioService");
+const { prepareSpotifyRounds } = require("./spotifyRounds");
+const { randomAvatar } = require("./avatarService");
 
 const genCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
 
 // Domyślne ustawienia - 1:1 odpowiednik `settings` z mp.py
 function defaultSettings() {
   return {
+    zrodlo: "lokalne", // "lokalne" | "spotify"
     tryb: "losowy_fragment", // "losowy_fragment" | "poczatek"
     iloscRund: 5,
     czasOdtwarzania: 3, // sekundy (fragment audio - w web wygodniej dłuższy niż 0.1s)
@@ -27,10 +30,14 @@ class Room {
     this.roundStartedAt = null;
     this.roundTimer = null;
     this.status = "lobby"; // lobby | preparing | playing | finished
+
+    // Pula utworów Spotify zebrana przez hosta (patrz spotifyCatalog.js)
+    this.spotifyArtists = new Map(); // artistId -> { name, trackCount }
+    this.spotifyTrackPool = []; // [{ id, uri, name, durationMs, artistId }, ...]
   }
 
   addPlayer(socketId, name) {
-    this.players.set(socketId, { name, score: 0 });
+    this.players.set(socketId, { name, score: 0, avatar: randomAvatar() });
   }
 
   removePlayer(socketId) {
@@ -42,6 +49,7 @@ class Room {
       id,
       name: p.name,
       score: p.score,
+      avatar: p.avatar,
     }));
   }
 
@@ -79,9 +87,18 @@ class GameManager {
   // --- Przygotowanie rund: odpowiednik prepare_rounds() ---
   async prepareRoundsForRoom(room) {
     room.status = "preparing";
-    room.preparedRounds = await prepareRounds(room.settings, (i, total) => {
-      this.io.to(room.code).emit("game:prepare_progress", { i, total });
-    });
+
+    if (room.settings.zrodlo === "spotify") {
+      const artistNames = new Map(
+        [...room.spotifyArtists.entries()].map(([id, a]) => [id, a.name])
+      );
+      room.preparedRounds = prepareSpotifyRounds(room.settings, room.spotifyTrackPool, artistNames);
+    } else {
+      room.preparedRounds = await prepareRounds(room.settings, (i, total) => {
+        this.io.to(room.code).emit("game:prepare_progress", { i, total });
+      });
+    }
+
     room.currentRoundIndex = -1;
     room.status = room.preparedRounds.length ? "playing" : "lobby";
     return room.preparedRounds;
@@ -100,23 +117,34 @@ class GameManager {
     room.answers.clear();
     room.roundStartedAt = Date.now();
 
-    // Host dostaje ścieżkę do klipu audio (odtwarza je lokalnie na ekranie/TV)
-    this.io.to(room.hostSocketId).emit("round:start_host", {
+    const basePayload = {
       roundIndex: room.currentRoundIndex,
       total: room.preparedRounds.length,
-      clipUrl: `/clips/${round.clipFile}`,
       options: round.options,
       timeLimit: room.settings.czasNaOdpowiedz,
-    });
+    };
+
+    // Host dostaje dane do odtworzenia audio (plik lokalny albo utwór Spotify)
+    const hostPayload =
+      round.source === "spotify"
+        ? {
+            ...basePayload,
+            source: "spotify",
+            spotifyUri: round.spotifyUri,
+            startPositionMs: round.startPositionMs,
+            clipDurationMs: Math.round(room.settings.czasOdtwarzania * 1000),
+          }
+        : {
+            ...basePayload,
+            source: "lokalne",
+            clipUrl: `/clips/${round.clipFile}`,
+          };
+
+    this.io.to(room.hostSocketId).emit("round:start_host", hostPayload);
 
     // Gracze dostają tylko opcje (bez audio, bez poprawnej odpowiedzi)
     for (const socketId of room.players.keys()) {
-      this.io.to(socketId).emit("round:start_player", {
-        roundIndex: room.currentRoundIndex,
-        total: room.preparedRounds.length,
-        options: round.options,
-        timeLimit: room.settings.czasNaOdpowiedz,
-      });
+      this.io.to(socketId).emit("round:start_player", basePayload);
     }
 
     room.roundTimer = setTimeout(
@@ -170,6 +198,7 @@ class GameManager {
       results.push({
         playerId: socketId,
         name: player.name,
+        avatar: player.avatar,
         answered: !!answer,
         isCorrect,
         pointsEarned,
@@ -191,6 +220,23 @@ class GameManager {
       leaderboard: room.publicPlayerList().sort((a, b) => b.score - a.score),
     });
     clearClips(); // sprzątanie, odpowiednik clear_temp_files()
+  }
+
+  // --- Powrót do lobby po zakończonej grze - TEN SAM pokój i gracze,
+  // punkty wyzerowane. Celowo nie tworzy nowego pokoju: dzięki temu host nie
+  // musi przeładowywać strony (co niszczyłoby połączenie Spotify Web Playback
+  // SDK i wymuszało ponowne logowanie), a gracze nie muszą wpisywać kodu od nowa. ---
+  resetRoom(room) {
+    if (room.roundTimer) clearTimeout(room.roundTimer);
+    room.preparedRounds = [];
+    room.currentRoundIndex = -1;
+    room.answers.clear();
+    room.roundStartedAt = null;
+    room.roundTimer = null;
+    room.status = "lobby";
+    for (const player of room.players.values()) {
+      player.score = 0;
+    }
   }
 }
 

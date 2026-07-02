@@ -4,6 +4,9 @@
   "description": "Quiz muzyczny online (host + gracze przez WebSocket), oparty na logice z mp.py",
   "main": "server/index.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js"
