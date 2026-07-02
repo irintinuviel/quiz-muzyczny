@@ -31,11 +31,14 @@ function getSongsByArtist(artist) {
     .map((f) => path.join(folder, f));
 }
 
-// --- odpowiednik get_all_songs() ---
+// --- odpowiednik get_all_songs() - zwraca też artystę (nazwę folderu),
+// żeby dało się zbudować etykietę "Tytuł - Wykonawca" ---
 function getAllSongs(activeArtists) {
   const songs = [];
   for (const artist of activeArtists) {
-    songs.push(...getSongsByArtist(artist));
+    for (const p of getSongsByArtist(artist)) {
+      songs.push({ path: p, artist });
+    }
   }
   return songs;
 }
@@ -136,7 +139,7 @@ async function prepareRounds(settings, onProgress) {
   const rounds = [];
 
   for (let i = 0; i < selected.length; i++) {
-    const song = selected[i];
+    const { path: song, artist } = selected[i];
     onProgress?.(i + 1, selected.length);
 
     let duration;
@@ -193,20 +196,23 @@ async function prepareRounds(settings, onProgress) {
       continue;
     }
 
-    const correctTitle = extractTitle(song);
-    const otherTitles = allSongs
-      .map(extractTitle)
-      .filter((t) => t !== correctTitle);
-    const distractors = shuffle(otherTitles).slice(
+    // Opcje jako obiekty {title, artist} (artysta = folder) - dzięki temu
+    // front-end może wyświetlić wykonawcę mniejszą czcionką pod tytułem
+    const correctEntry = { title: extractTitle(song), artist };
+    const otherEntries = allSongs
+      .filter((s) => s.path !== song)
+      .map((s) => ({ title: extractTitle(s.path), artist: s.artist }));
+    const distractors = shuffle(otherEntries).slice(
       0,
-      Math.min(settings.iloscOdpowiedzi - 1, otherTitles.length)
+      Math.min(settings.iloscOdpowiedzi - 1, otherEntries.length)
     );
-    const options = shuffle([...distractors, correctTitle]);
+    const options = shuffle([...distractors, correctEntry]);
 
     rounds.push({
+      source: "lokalne",
       songPath: song,
       clipFile: path.basename(clipPath), // serwowane statycznie pod /clips/<plik>
-      correct: correctTitle,
+      correct: correctEntry,
       options,
     });
   }
